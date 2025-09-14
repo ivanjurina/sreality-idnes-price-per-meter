@@ -9,6 +9,17 @@
     animation: fadeIn 0.3s ease-in;
 }
 
+/* Specific styles for reality.idnes.cz */
+.c-products__price-per-m2 {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    text-align: left !important;
+}
+
+.c-products__price-per-m2 strong {
+    color: #007bff !important;
+}
+
 @keyframes fadeIn {
     from {
         opacity: 0;
@@ -20,9 +31,16 @@
     }
 }
 
-/* Hover effect for better visibility */
+/* Hover effect for better visibility on sreality.cz */
 [id^="estate-list-item-"]:hover .price-per-meter,
 [id^="region-tip-item-"]:hover .price-per-meter {
+    color: #0056b3 !important;
+    transform: scale(1.05);
+    transition: all 0.2s ease;
+}
+
+/* Hover effect for reality.idnes.cz */
+.c-products__item:hover .price-per-meter {
     color: #0056b3 !important;
     transform: scale(1.05);
     transition: all 0.2s ease;
@@ -32,4 +50,10 @@
 .price-per-meter::before {
     content: "💰 ";
     margin-right: 3px;
+}
+
+/* Make sure it fits well in the reality.idnes.cz layout */
+.c-products__content .price-per-meter {
+    width: 100%;
+    box-sizing: border-box;
 }

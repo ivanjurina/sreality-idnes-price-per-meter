@@ -1,5 +1,5 @@
-// Sreality Price Per Square Meter Calculator
-console.log('Sreality Price Per M² Calculator loaded');
+// Czech Real Estate Price Per Square Meter Calculator
+console.log('Czech Real Estate Price Per M² Calculator loaded');
 
 function extractNumber(str) {
     // Remove spaces and convert to number
@@ -11,7 +11,8 @@ function formatNumber(num) {
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 }
 
-function calculatePricePerMeter() {
+// Function for sreality.cz
+function calculatePricePerMeterSreality() {
     // Find all estate list items
     const listings = document.querySelectorAll('[id^="estate-list-item-"], [id^="region-tip-item-"]');
     
@@ -68,6 +69,77 @@ function calculatePricePerMeter() {
     });
 }
 
+// Function for reality.idnes.cz
+function calculatePricePerMeterIdnes() {
+    // Find all product items
+    const listings = document.querySelectorAll('.c-products__item article');
+    
+    listings.forEach(listing => {
+        // Skip if already processed
+        if (listing.querySelector('.price-per-meter')) {
+            return;
+        }
+        
+        // Find the title with property type and size
+        const titleElement = listing.querySelector('.c-products__title');
+        if (!titleElement) return;
+        
+        // Find the price element
+        const priceElement = listing.querySelector('.c-products__price strong');
+        if (!priceElement) return;
+        
+        const titleText = titleElement.textContent;
+        const priceText = priceElement.textContent;
+        
+        // Skip if price is not available
+        if (priceText.includes('dohodou') || priceText.includes('vyžádání')) {
+            return;
+        }
+        
+        // Extract size in m²
+        const sizeMatch = titleText.match(/(\d+)\s*m²/);
+        if (!sizeMatch) return;
+        const size = parseInt(sizeMatch[1]);
+        
+        // Extract price
+        const price = extractNumber(priceText);
+        if (!price || isNaN(price)) return;
+        
+        // Calculate price per m²
+        const pricePerMeter = Math.round(price / size);
+        
+        // Create and insert the price per m² element
+        const pricePerMeterDiv = document.createElement('p');
+        pricePerMeterDiv.className = 'price-per-meter c-products__price-per-m2';
+        pricePerMeterDiv.style.cssText = `
+            color: #007bff;
+            font-weight: 600;
+            font-size: 0.85em;
+            margin-top: 5px;
+            padding: 5px 0 0 0;
+            border-top: 1px solid #e0e0e0;
+        `;
+        pricePerMeterDiv.innerHTML = `${formatNumber(pricePerMeter)} Kč/m²`;
+        
+        // Find the price container and insert after it
+        const priceContainer = listing.querySelector('.c-products__price');
+        if (priceContainer && priceContainer.parentNode) {
+            priceContainer.parentNode.insertBefore(pricePerMeterDiv, priceContainer.nextSibling);
+        }
+    });
+}
+
+// Main function to detect site and run appropriate calculator
+function calculatePricePerMeter() {
+    const hostname = window.location.hostname;
+    
+    if (hostname.includes('sreality.cz')) {
+        calculatePricePerMeterSreality();
+    } else if (hostname.includes('reality.idnes.cz')) {
+        calculatePricePerMeterIdnes();
+    }
+}
+
 // Run calculation when page loads
 calculatePricePerMeter();
 
@@ -76,12 +148,27 @@ const observer = new MutationObserver((mutations) => {
     // Check if new listings were added
     const hasNewListings = mutations.some(mutation => {
         return Array.from(mutation.addedNodes).some(node => {
-            return node.nodeType === 1 && (
-                node.querySelector && (
-                    node.querySelector('[id^="estate-list-item-"]') ||
-                    node.id && node.id.startsWith('estate-list-item-')
-                )
-            );
+            if (node.nodeType !== 1) return false;
+            
+            // Check for sreality.cz listings
+            if (node.querySelector && (
+                node.querySelector('[id^="estate-list-item-"]') ||
+                node.id && node.id.startsWith('estate-list-item-')
+            )) {
+                return true;
+            }
+            
+            // Check for reality.idnes.cz listings
+            if (node.querySelector && node.querySelector('.c-products__item')) {
+                return true;
+            }
+            
+            // Check if the node itself is a listing
+            if (node.classList && node.classList.contains('c-products__item')) {
+                return true;
+            }
+            
+            return false;
         });
     });
     
@@ -105,3 +192,13 @@ window.addEventListener('scroll', () => {
 
 // Run periodically to catch any missed updates
 setInterval(calculatePricePerMeter, 3000);
+
+// Also run on AJAX navigation (for single-page app behavior)
+let lastUrl = location.href;
+new MutationObserver(() => {
+    const url = location.href;
+    if (url !== lastUrl) {
+        lastUrl = url;
+        setTimeout(calculatePricePerMeter, 500);
+    }
+}).observe(document, {subtree: true, childList: true});
