@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "Sreality Price Per M² Calculator",
+  "version": "1.0",
+  "description": "Automatically calculates and displays price per square meter on sreality.cz",
+  "permissions": [
+    "activeTab"
+  ],
+  "host_permissions": [
+    "https://www.sreality.cz/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://www.sreality.cz/*"],
+      "js": ["content.js"],
+      "css": ["styles.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "icons": {
+    "16": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
+  }
+}
